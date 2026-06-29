@@ -1,29 +1,26 @@
 const express = require('express');
-const ytdl = require('@distube/ytdl-core'); // Kütüphane ismini değiştirdik
+const ytdl = require('@distube/ytdl-core');
 const cors = require('cors');
 const app = express();
 
 app.use(cors());
 
+// YOUTUBE KUKLA AJANI EKLEME
+const agent = ytdl.createAgent(JSON.parse(process.env.COOKIES || '[]'));
+
 app.get('/download', async (req, res) => {
     const url = req.query.url;
-    if (!ytdl.validateURL(url)) return res.status(400).send('Geçersiz link');
-
     try {
-        // Videoyu getir
-        const info = await ytdl.getInfo(url);
-        
-        // Ses akışını al
-        const audioStream = ytdl(url, { 
+        // AJAN İLE İSTEK AT
+        const stream = ytdl(url, { 
             filter: 'audioonly', 
-            quality: 'highestaudio' 
+            quality: 'highestaudio',
+            agent: agent // Burası kritik!
         });
 
-        res.header('Content-Disposition', `attachment; filename="song.mp3"`);
-        audioStream.pipe(res);
-        
+        res.header('Content-Disposition', 'attachment; filename="song.mp3"');
+        stream.pipe(res);
     } catch (err) {
-        console.error("Hata:", err);
         res.status(500).send("Sunucu hatası: " + err.message);
     }
 });
