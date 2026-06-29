@@ -1,5 +1,5 @@
 const express = require('express');
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core'); // Kütüphane ismini değiştirdik
 const cors = require('cors');
 const app = express();
 
@@ -10,15 +10,20 @@ app.get('/download', async (req, res) => {
     if (!ytdl.validateURL(url)) return res.status(400).send('Geçersiz link');
 
     try {
-        // İndirme bilgilerini al
+        // Videoyu getir
         const info = await ytdl.getInfo(url);
-        // En iyi ses formatını seç
-        const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
         
-        res.header('Content-Disposition', `attachment; filename="${info.videoDetails.title}.mp3"`);
-        ytdl(url, { format: format }).pipe(res);
+        // Ses akışını al
+        const audioStream = ytdl(url, { 
+            filter: 'audioonly', 
+            quality: 'highestaudio' 
+        });
+
+        res.header('Content-Disposition', `attachment; filename="song.mp3"`);
+        audioStream.pipe(res);
+        
     } catch (err) {
-        console.error("İndirme hatası:", err);
+        console.error("Hata:", err);
         res.status(500).send("Sunucu hatası: " + err.message);
     }
 });
